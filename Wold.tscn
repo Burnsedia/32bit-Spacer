@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Zenith.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Imperial.tscn" type="PackedScene" id=2]
+
+[sub_resource type="Curve3D" id=1]
+bake_interval = 230.59
+_data = {
+"points": PoolVector3Array( 0, 0, 0, 0, 0, 0, -290.57, 145.854, 275.568, 0, 0, 0, 0, 0, 0, -339.363, 74.4902, 136.791, 0, 0, 0, 0, 0, 0, -377.312, 14.8472, 18.244, 0, 0, 0, 0, 0, 0, -248.254, -6.38168, -112.363, 0, 0, 0, 0, 0, 0, -216.543, -40.6755, -305.445, 0, 0, 0, 0, 0, 0, 20.4494, -95.4658, -323.048, 0, 0, 0, 0, 0, 0, 198.077, -53.4717, -100.175, 0, 0, 0, 0, 0, 0, 233.395, 13.5804, 15.9047, 0, 0, 0, 0, 0, 0, 200.124, 57.5993, 163.913, 0, 0, 0, 0, 0, 0, 176.068, -27.5991, 237.698, 0, 0, 0, 0, 0, 0, 38.3806, -10.9237, 344.333, 0, 0, 0, 0, 0, 0, -71.5958, -5.21896, 425.955, 0, 0, 0, 0, 0, 0, -179.108, 9.70116, 372.857, 0, 0, 0, 0, 0, 0, -257.467, 98.783, 318.881, 0, 0, 0, 0, 0, 0, -290.57, 145.854, 275.568 ),
+"tilts": PoolRealArray( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 )
+}
+
+[node name="Wold" type="Spatial"]
+
+[node name="Path" type="Path" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 88.7894, -35.1531, -19.5779 )
+curve = SubResource( 1 )
+
+[node name="PathFollow" type="PathFollow" parent="Path"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -290.57, 145.854, 275.568 )
+
+[node name="Imperial5" parent="Path/PathFollow" instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -134.746, 38.9013, -382.784 )
+speed = 50
+
+[node name="Imperial6" parent="Path/PathFollow" instance=ExtResource( 2 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 108.71, -55.8906, 0 )
+speed = 50
+
+[node name="Camera" type="Camera" parent="Path/PathFollow/Imperial6"]
+transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0.106659, 8.18959, -0.0848389 )
+far = 8192.0
+
+[node name="Position3D" type="Position3D" parent="Path"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 15.6628, 0, 0 )
+
+[node name="Zenith" parent="." instance=ExtResource( 1 )]
+transform = Transform( 15, 0, 0, 0, 15, 0, 0, 0, 15, 0, -0.0180319, 0 )
