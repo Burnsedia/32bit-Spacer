@@ -1,7 +1,9 @@
 extends KinematicBody
 
+# Constants
 const MAXSPEED = 30
 const ACCELERATION = 0.75
+#vars
 var inputVector = Vector3()
 var velo = Vector3()
 var cooldown = 0
