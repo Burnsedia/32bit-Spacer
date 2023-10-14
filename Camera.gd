@@ -1,10 +1,10 @@
-extends Camera
+extends Camera3d
 
 
 # Declare member variables here. Examples:
 # var a = 2
 # var b = "text"
-onready var target = get_parent()
+@onready var target = get_parent()
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
