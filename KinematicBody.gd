@@ -1,4 +1,4 @@
-extends KinematicBody
+extends CharitorBody3d
 
 # Constants
 const MAXSPEED = 30
@@ -8,10 +8,10 @@ const ACCELERATION = 0.75
 var inputVector = Vector3()
 var velo = Vector3()
 var cooldown = 0
-var Bullet = load("res://Bullet.tscn")
 #Onready
-onready var guns = [$Gun0, $Gun1]
-onready var main = get_tree().current_scene
+@onready var Bullet = preload("res://Bullet.tscn")
+@onready var guns = [$Gun0, $Gun1]
+@onready var main = get_tree().current_scene
 
 func _physics_process(delta):
 	inputVector.x = Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left")
