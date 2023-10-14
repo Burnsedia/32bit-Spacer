@@ -1,11 +1,11 @@
-extends KinematicBody
+extends CharitorBody3d
 
 
 # Declare member variables here. Examples:
 # var a = 2
 # var b = "text"
-onready var path = get_parent()
-onready var detect_npcs_area = $Area
+@onready var path = get_parent()
+@onready var detect_npcs_area = $Area
 
 
 var move_speed = 3
@@ -21,12 +21,12 @@ var underAttact = false
 enum STATE { patrole, attack, flee}
 enum TEAM {human, xeno}
 
-export(TEAM) var team
-export(STATE) var state 
+@export(TEAM) var team
+@export(STATE) var state 
 
-export var speed = 42
-export var attack_range = 2.0
-export var attack_rate = 0.5
+@export var speed = 42
+@export var attack_range = 2.0
+@export var attack_rate = 0.5
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	state = STATE.patrole
@@ -58,8 +58,6 @@ func patroleState(delta):
 #func fleeState(delta):
 #	if !underAttact:
 #		state = STATE.patrole
-#
-#
 
 
 func _on_Area_body_entered(body):
