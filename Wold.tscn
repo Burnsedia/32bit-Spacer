@@ -1,38 +1,48 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=6 format=3 uid="uid://d2r501n8or6x8"]
 
-[ext_resource path="res://Zenith.tscn" type="PackedScene" id=1]
-[ext_resource path="res://Imperial.tscn" type="PackedScene" id=2]
+[ext_resource type="PackedScene" path="res://Zenith.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://Imperial.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://Pancake.tscn" id="3_4g7sx"]
+[ext_resource type="Script" uid="uid://t067nlrbr26v" path="res://KinematicBody.gd" id="4_1qbdp"]
 
-[sub_resource type="Curve3D" id=1]
+[sub_resource type="Curve3D" id="1"]
 bake_interval = 230.59
 _data = {
-"points": PackedVector3Array( 0, 0, 0, 0, 0, 0, -290.57, 145.854, 275.568, 0, 0, 0, 0, 0, 0, -339.363, 74.4902, 136.791, 0, 0, 0, 0, 0, 0, -377.312, 14.8472, 18.244, 0, 0, 0, 0, 0, 0, -248.254, -6.38168, -112.363, 0, 0, 0, 0, 0, 0, -216.543, -40.6755, -305.445, 0, 0, 0, 0, 0, 0, 20.4494, -95.4658, -323.048, 0, 0, 0, 0, 0, 0, 198.077, -53.4717, -100.175, 0, 0, 0, 0, 0, 0, 233.395, 13.5804, 15.9047, 0, 0, 0, 0, 0, 0, 200.124, 57.5993, 163.913, 0, 0, 0, 0, 0, 0, 176.068, -27.5991, 237.698, 0, 0, 0, 0, 0, 0, 38.3806, -10.9237, 344.333, 0, 0, 0, 0, 0, 0, -71.5958, -5.21896, 425.955, 0, 0, 0, 0, 0, 0, -179.108, 9.70116, 372.857, 0, 0, 0, 0, 0, 0, -257.467, 98.783, 318.881, 0, 0, 0, 0, 0, 0, -290.57, 145.854, 275.568 ),
-"tilts": PackedFloat32Array( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 )
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -290.57, 145.854, 275.568, 0, 0, 0, 0, 0, 0, -339.363, 74.4902, 136.791, 0, 0, 0, 0, 0, 0, -377.312, 14.8472, 18.244, 0, 0, 0, 0, 0, 0, -248.254, -6.38168, -112.363, 0, 0, 0, 0, 0, 0, -216.543, -40.6755, -305.445, 0, 0, 0, 0, 0, 0, 20.4494, -95.4658, -323.048, 0, 0, 0, 0, 0, 0, 198.077, -53.4717, -100.175, 0, 0, 0, 0, 0, 0, 233.395, 13.5804, 15.9047, 0, 0, 0, 0, 0, 0, 200.124, 57.5993, 163.913, 0, 0, 0, 0, 0, 0, 176.068, -27.5991, 237.698, 0, 0, 0, 0, 0, 0, 38.3806, -10.9237, 344.333, 0, 0, 0, 0, 0, 0, -71.5958, -5.21896, 425.955, 0, 0, 0, 0, 0, 0, -179.108, 9.70116, 372.857, 0, 0, 0, 0, 0, 0, -257.467, 98.783, 318.881, 0, 0, 0, 0, 0, 0, -290.57, 145.854, 275.568),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }
+point_count = 15
 
 [node name="Wold" type="Node3D"]
 
 [node name="Path3D" type="Path3D" parent="."]
-transform = Transform3D( 1, 0, 0, 0, 1, 0, 0, 0, 1, 88.7894, -35.1531, -19.5779 )
-curve = SubResource( 1 )
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 88.7894, -35.1531, -19.5779)
+curve = SubResource("1")
 
 [node name="PathFollow3D" type="PathFollow3D" parent="Path3D"]
-transform = Transform3D( 1, 0, 0, 0, 1, 0, 0, 0, 1, -290.57, 145.854, 275.568 )
+transform = Transform3D(0.9433888, -0.14477323, 0.2984262, 0, 0.89971733, 0.436473, -0.33168885, -0.41176376, 0.84878325, -290.57, 145.854, 275.568)
 
-[node name="Imperial5" parent="Path3D/PathFollow3D" instance=ExtResource( 2 )]
-transform = Transform3D( 1, 0, 0, 0, 1, 0, 0, 0, 1, -134.746, 38.9013, -382.784 )
+[node name="Imperial5" parent="Path3D/PathFollow3D" instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -134.746, 38.9013, -382.784)
 speed = 50
 
-[node name="Imperial6" parent="Path3D/PathFollow3D" instance=ExtResource( 2 )]
-transform = Transform3D( 1, 0, 0, 0, 1, 0, 0, 0, 1, 108.71, -55.8906, 0 )
+[node name="Imperial6" parent="Path3D/PathFollow3D" instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 108.71, -55.8906, 0)
 speed = 50
 
 [node name="Camera3D" type="Camera3D" parent="Path3D/PathFollow3D/Imperial6"]
-transform = Transform3D( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0.106659, 8.18959, -0.0848389 )
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0.106659, 8.18959, -0.0848389)
 far = 8192.0
 
 [node name="Marker3D" type="Marker3D" parent="Path3D"]
-transform = Transform3D( 1, 0, 0, 0, 1, 0, 0, 0, 1, 15.6628, 0, 0 )
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.6628, 0, 0)
 
-[node name="Zenith" parent="." instance=ExtResource( 1 )]
-transform = Transform3D( 15, 0, 0, 0, 15, 0, 0, 0, 15, 0, -0.0180319, 0 )
+[node name="Zenith" parent="." instance=ExtResource("1")]
+transform = Transform3D(15, 0, 0, 0, 15, 0, 0, 0, 15, 0, -0.0180319, 0)
+
+[node name="Pancake" parent="." instance=ExtResource("3_4g7sx")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 157.59767, 0, 0)
+script = ExtResource("4_1qbdp")
+
+[node name="Camera3D" type="Camera3D" parent="Pancake"]
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 0, 1.4039993, -16.6661)

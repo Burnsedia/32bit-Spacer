@@ -1,4 +1,4 @@
-extends CharitorBody3d
+extends CharacterBody3D
 
 # Constants
 const MAXSPEED = 30
@@ -9,8 +9,8 @@ var inputVector = Vector3()
 var velo = Vector3()
 var cooldown = 0
 #Onready
-@onready var Bullet = preload("res://Bullet.tscn")
-@onready var guns = [$Gun0, $Gun1]
+#@onready var Bullet = preload("res://Bullet.tscn")
+#@onready var guns = [$Gun0, $Gun1]
 @onready var main = get_tree().current_scene
 
 func _physics_process(delta):
@@ -30,11 +30,11 @@ func _physics_process(delta):
 	#shooting
 	if Input.is_action_pressed("ui_accept") and cooldown <= 0:
 		cooldown = COOLDOWN * delta
-		for i in guns:
-			var bullet = Bullet.instantiate()
-			main.add_child(bullet)
-			bullet.transform = i.global_transform
-			bullet.velo = bullet.transform.basis.z * -600
+		#for i in guns:
+			#var bullet = Bullet.instantiate()
+			#main.add_child(bullet)
+			#bullet.transform = i.global_transform
+			#bullet.velo = bullet.transform.basis.z * -600
 			
 	#cooldown
 	if cooldown > 0:

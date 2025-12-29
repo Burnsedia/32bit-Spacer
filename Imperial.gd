@@ -1,4 +1,4 @@
-extends CharitorBody3d
+extends CharacterBody3D
 
 
 # Declare member variables here. Examples:
@@ -39,14 +39,15 @@ func _ready():
 #	update_cur_target()
 
 func _physics_process(delta):
-	match state:
-		STATE.patrole:
-			patroleState(delta)
-
-func patroleState(delta):
-	path.offset += speed * delta
-#	if in_attack_range_of_cur_target():
-##		state = STATE.attack
+	pass
+	#match state:
+		#STATE.patrole:
+			#patroleState(delta)
+##
+#func patroleState(delta):
+	#path.offset += speed * delta
+##	if in_attack_range_of_cur_target():
+###		state = STATE.attack
 #
 #
 #func attactState(detla):
@@ -60,7 +61,7 @@ func patroleState(delta):
 #		state = STATE.patrole
 
 
-func _on_Area_body_entered(body):
-	var vec_to_body	= body.transform.orgin - self.transform.origin
-	pass
-	
+#func _on_Area_body_entered(body):
+	#var vec_to_body	= body.transform.orgin - self.transform.origin
+	#pass
+	#
