@@ -17,6 +17,7 @@ func _physics_process(delta):
 	inputVector.x = Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left")
 	inputVector.y = Input.get_action_strength("ui_up") - Input.get_action_strength("ui_down")
 	inputVector = inputVector.normalized()
+	print(inputVector)
 	velo.x = move_toward(velo.x, inputVector.x * MAXSPEED, ACCELERATION)
 	velo.y = move_toward(velo.y, inputVector.y * MAXSPEED, ACCELERATION)
 	rotation_degrees.z = velo.x * -2
