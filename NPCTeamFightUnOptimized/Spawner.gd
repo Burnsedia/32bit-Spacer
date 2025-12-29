@@ -1,10 +1,10 @@
-extends Spatial
+extends Node3D
 
-export var item_path = ""
-export var x_count = 1
-export var y_count = 1
-export var z_count = 1
-export var spacing = 1
+@export var item_path = ""
+@export var x_count = 1
+@export var y_count = 1
+@export var z_count = 1
+@export var spacing = 1
 
 
 func _ready():
@@ -12,6 +12,6 @@ func _ready():
 	for x in range(x_count):
 		for y in range(y_count):
 			for z in range(z_count):
-				var inst = obj.instance()
+				var inst = obj.instantiate()
 				add_child(inst)
 				inst.transform.origin = Vector3(x, y, z) * spacing

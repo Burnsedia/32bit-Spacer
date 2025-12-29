@@ -2,5 +2,5 @@
 
 [ext_resource path="res://NPCTeamFightUnOptimized/Spawner.gd" type="Script" id=1]
 
-[node name="Spawner" type="Spatial"]
+[node name="Spawner" type="Node3D"]
 script = ExtResource( 1 )

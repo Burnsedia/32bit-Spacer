@@ -22,7 +22,8 @@ func _physics_process(delta):
 	rotation_degrees.z = velo.x * -2
 	rotation_degrees.x = velo.y / 2
 	rotation_degrees.y = -velo.x / 2
-	move_and_slide(velo)
+	set_velocity(velo)
+	move_and_slide()
 	transform.origin.x = clamp(transform.origin.x, -15, 15)
 	transform.origin.y = clamp(transform.origin.y, -10, 10)
 	
@@ -30,7 +31,7 @@ func _physics_process(delta):
 	if Input.is_action_pressed("ui_accept") and cooldown <= 0:
 		cooldown = COOLDOWN * delta
 		for i in guns:
-			var bullet = Bullet.instance()
+			var bullet = Bullet.instantiate()
 			main.add_child(bullet)
 			bullet.transform = i.global_transform
 			bullet.velo = bullet.transform.basis.z * -600

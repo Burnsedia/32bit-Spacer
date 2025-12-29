@@ -1,20 +1,20 @@
-extends KinematicBody
+extends CharacterBody3D
 
 
 enum TEAMS {SOLDIERS, BANDITS}
-export(TEAMS) var team
+@export var team: TEAMS
 
 var nearby_allies = []
 var nearby_enemies = []
-var cur_target : Spatial
+var cur_target : Node3D
 
 var move_speed = 3
-export var attack_range = 2.0
-export var attack_rate = 0.5
+@export var attack_range = 2.0
+@export var attack_rate = 0.5
 var cur_attack_time = 0.0
 var health = 5
 
-onready var detect_npcs_area = $Area
+@onready var detect_npcs_area = $Area3D
 
 func _ready():
 	team = randi() % 2

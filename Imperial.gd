@@ -5,7 +5,7 @@ extends CharitorBody3d
 # var a = 2
 # var b = "text"
 @onready var path = get_parent()
-@onready var detect_npcs_area = $Area
+@onready var detect_npcs_area = $Area3D
 
 
 var move_speed = 3
@@ -14,15 +14,15 @@ var health = 5
 var target = null
 var nearby_allies = []
 var nearby_enemies = []
-var cur_target : Spatial
+var cur_target : Node3D
 
 var underAttact = false
 
 enum STATE { patrole, attack, flee}
 enum TEAM {human, xeno}
 
-@export(TEAM) var team
-@export(STATE) var state 
+@export var team: TEAM
+@export var state: STATE 
 
 @export var speed = 42
 @export var attack_range = 2.0
