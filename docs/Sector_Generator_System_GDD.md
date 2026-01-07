@@ -58,10 +58,10 @@ signal universe_map_updated()
 ```
 
 #### UniverseLayoutGenerator
-- Creates grid-based sector connectivity
-- Places special sectors (boss, trader hubs, rare biomes)
+- Creates infinite grid-based sector connectivity
+- Places special sectors (boss, trader hubs, rare biomes) using coordinate-based seeding
 - Generates navigation pathways between sectors
-- Ensures balanced difficulty progression
+- Ensures balanced difficulty progression based on distance from origin
 
 #### SectorContentGenerator
 - Terrain generation (asteroids, planets, stations)
@@ -75,19 +75,64 @@ signal universe_map_updated()
 - Faction-controlled areas
 - Environmental storytelling elements
 
+#### CoordinateSeedingSystem
+- Converts <x,y> coordinates to deterministic RNG seeds
+- Ensures consistent sector generation for same coordinates
+- Supports playthrough variation through secondary seeding
+- Uses Cantor pairing function for unique coordinate-to-seed mapping
+- Handles negative coordinates through sign encoding
+- Provides multiple determinism levels (pure deterministic vs playthrough variation)
+
+### Coordinate-Based Generation Algorithm
+
+#### Seed Generation Process
+1. **Coordinate Encoding**: Convert Vector2i(x,y) to unique integer seed
+2. **Sign Handling**: Encode negative coordinates using sign bits
+3. **Cantor Pairing**: Apply mathematical bijection for unique mapping
+4. **Seed Combination**: Optionally combine with playthrough seed for variation
+
+#### Mathematical Foundation
+```gdscript
+# Cantor pairing function: (x + y) * (x + y + 1) / 2 + y
+func coords_to_seed(coords: Vector2i) -> int:
+    var x = coords.x
+    var y = coords.y
+
+    # Handle negative coordinates by encoding sign in value
+    x = abs(x) * 2 + (1 if x < 0 else 0)
+    y = abs(y) * 2 + (1 if y < 0 else 0)
+
+    # Apply Cantor pairing
+    var sum = x + y
+    return (sum * (sum + 1) / 2) + y
+```
+
+#### Determinism Levels
+- **Pure Deterministic**: Same coordinates always generate identical sectors
+- **Playthrough Variation**: Base seed + playthrough modifier for different runs
+- **Hybrid Approach**: Core structure deterministic, details varied
+
+#### Sector Property Generation
+- **Sector Type**: Determined by seeded RNG with distance-based weighting
+- **Resources**: Fixed spawn locations and quantities per coordinate
+- **Stations**: Deterministic placement for trade hubs and repair facilities
+- **Events**: Pre-determined event locations with random trigger conditions
+
 ### Data Flow
-1. Universe layout generated at game start
-2. Player moves between sectors, triggering generation
-3. Sector content created with theme-based parameters
-4. Dynamic events injected based on player progress
-5. Sectors unloaded when player moves away
+1. Player requests sector at coordinates <x,y>
+2. Coordinates converted to deterministic RNG seed using Cantor pairing
+3. Seeded random number generator initialized for consistent generation
+4. Sector content generated using seeded RNG for reproducible results
+5. Dynamic events injected based on seeded random values
+6. Sector cached for future access at same coordinates
 
 ### Performance Characteristics
-- Universe generation: <2 seconds
-- Sector generation: <500ms per sector
+- Sector generation: <500ms per sector (on-demand)
 - Memory usage: <50MB for active sectors
-- Supports 100+ sectors in universe grid
-- Efficient sector unloading/loading
+- Supports truly infinite universe (no practical limits)
+- Efficient spatial partitioning for neighbor queries
+- Background pre-generation for smooth transitions
+- Distance-based detail level of detail (LOD)
 
 ## Technical Implementation
 
@@ -122,6 +167,9 @@ extends Resource
 
 @export var bounds_min: Vector3 = Vector3(-100, -100, -100)
 @export var bounds_max: Vector3 = Vector3(100, 100, 100)
+
+var seeded_rng: RandomNumberGenerator  # Deterministic RNG based on coordinates
+var generation_seed: int  # The seed used to generate this sector
 
 var terrain_chunks: Array[TerrainChunk] = []
 var spawn_points: Array[SpawnPoint] = []
@@ -162,63 +210,109 @@ func mark_cleared():
     cleared = true
 ```
 
-#### UniverseLayoutGenerator.gd
+#### CoordinateSeedGenerator.gd
 ```gdscript
-class_name UniverseLayoutGenerator
+class_name CoordinateSeedGenerator
 extends Node
 
-@export var boss_sector_distance: int = 8  # Distance from start
-@export var trader_hub_count: int = 3
-@export var rare_sector_count: int = 5
+@export var playthrough_seed: int = 0  # 0 = pure deterministic
 
-func generate_universe_layout(size: Vector2i) -> Dictionary:
-    var universe = {}
+static func coords_to_seed(coords: Vector2i) -> int:
+    # Convert 2D coordinates to unique 1D seed using Cantor pairing
+    var x = coords.x
+    var y = coords.y
 
-    # Create basic grid
-    for x in range(size.x):
-        for y in range(size.y):
-            var coords = Vector2i(x, y)
-            universe[coords] = _create_basic_sector(coords)
+    # Handle negative coordinates by encoding sign
+    x = abs(x) * 2 + (1 if x < 0 else 0)
+    y = abs(y) * 2 + (1 if y < 0 else 0)
 
-    # Place special sectors
-    _place_boss_sector(universe, size)
-    _place_trader_hubs(universe, size)
-    _place_rare_sectors(universe, size)
-    _add_sector_connections(universe)
+    # Cantor pairing function: (x + y) * (x + y + 1) / 2 + y
+    var sum = x + y
+    return int((sum * (sum + 1) / 2) + y)
 
-    return universe
+func create_sector_rng(coords: Vector2i) -> RandomNumberGenerator:
+    var sector_seed = coords_to_seed(coords)
 
-func _create_basic_sector(coords: Vector2i) -> SectorData:
+    # Combine with playthrough seed for optional variation
+    var final_seed = sector_seed + playthrough_seed
+
+    var rng = RandomNumberGenerator.new()
+    rng.seed = final_seed
+    return rng
+
+func generate_sector_data(coords: Vector2i) -> SectorData:
     var sector = SectorData.new()
     sector.coordinates = coords
-    sector.sector_type = _get_random_sector_type(coords)
-    sector.rarity = SectorGenerator.SectorRarity.COMMON
+    sector.generation_seed = coords_to_seed(coords)
+    sector.seeded_rng = create_sector_rng(coords)
+
+    # Generate all sector properties using seeded RNG
+    sector.sector_type = _generate_sector_type(sector.seeded_rng, coords)
+    sector.rarity = _calculate_rarity(sector.seeded_rng, coords)
     sector.difficulty_level = _calculate_difficulty(coords)
+    sector.theme_name = _generate_theme(sector.sector_type, sector.seeded_rng)
+
     return sector
 
-func _get_random_sector_type(coords: Vector2i) -> SectorGenerator.SectorType:
-    var types = SectorGenerator.SectorType.values()
-    var weights = [0.4, 0.2, 0.2, 0.15, 0.05]  # Favor asteroid fields
+func _generate_sector_type(rng: RandomNumberGenerator, coords: Vector2i) -> SectorGenerator.SectorType:
+    var distance = coords.length()
+    var roll = rng.randf()
 
-    var random_value = randf()
-    var cumulative_weight = 0.0
+    # Distance-based type distribution
+    if distance < 5:  # Inner sectors (tutorial/safe)
+        if roll < 0.6: return SectorGenerator.SectorType.INHABITED_SYSTEM
+        elif roll < 0.8: return SectorGenerator.SectorType.ASTEROID_FIELD
+        else: return SectorGenerator.SectorType.NEBULA
 
-    for i in range(types.size()):
-        cumulative_weight += weights[i]
-        if random_value <= cumulative_weight:
-            return types[i]
+    elif distance < 20:  # Mid sectors (balanced)
+        if roll < 0.4: return SectorGenerator.SectorType.ASTEROID_FIELD
+        elif roll < 0.6: return SectorGenerator.SectorType.INHABITED_SYSTEM
+        elif roll < 0.8: return SectorGenerator.SectorType.DERELICT_ZONE
+        else: return SectorGenerator.SectorType.NEBULA
 
-    return SectorGenerator.SectorType.ASTEROID_FIELD
+    else:  # Deep space (dangerous/rare)
+        if roll < 0.3: return SectorGenerator.SectorType.DERELICT_ZONE
+        elif roll < 0.5: return SectorGenerator.SectorType.ASTEROID_FIELD
+        elif roll < 0.7: return SectorGenerator.SectorType.NEBULA
+        elif roll < 0.9: return SectorGenerator.SectorType.BOSS_SECTOR
+        else: return _generate_special_sector_type(rng)
 
-func _calculate_difficulty(coords: Vector2i) -> float:
-    var distance_from_start = coords.distance_to(Vector2i.ZERO)
-    var max_distance = sqrt(universe_size.x * universe_size.x + universe_size.y * universe_size.y)
+func _calculate_rarity(rng: RandomNumberGenerator, coords: Vector2i) -> SectorGenerator.SectorRarity:
+    var distance = coords.length()
+    var roll = rng.randf()
 
-    # Difficulty increases with distance, with some randomness
-    var base_difficulty = distance_from_start / max_distance
-    var random_factor = randf_range(-0.2, 0.2)
+    # Rare sectors become more common in deep space
+    if distance > 50 and roll < 0.1:
+        return SectorGenerator.SectorRarity.UNIQUE
+    elif distance > 30 and roll < 0.05:
+        return SectorGenerator.SectorRarity.RARE
+    elif distance > 15 and roll < 0.02:
+        return SectorGenerator.SectorRarity.UNCOMMON
+    else:
+        return SectorGenerator.SectorRarity.COMMON
 
-    return clamp(base_difficulty + random_factor, 0.1, 3.0)
+func _generate_special_sector_type(rng: RandomNumberGenerator) -> SectorGenerator.SectorType:
+    # Generate special sector types for deep space
+    var special_roll = rng.randf()
+    if special_roll < 0.6:
+        return SectorGenerator.SectorType.DERELICT_ZONE
+    else:
+        return SectorGenerator.SectorType.NEBULA
+
+func _generate_theme(sector_type: SectorGenerator.SectorType, rng: RandomNumberGenerator) -> String:
+    match sector_type:
+        SectorGenerator.SectorType.ASTEROID_FIELD:
+            return ["mining_colony", "asteroid_belt", "resource_rich"].pick_random()
+        SectorGenerator.SectorType.NEBULA:
+            return ["mysterious_nebula", "cosmic_cloud", "energy_storm"].pick_random()
+        SectorGenerator.SectorType.DERELICT_ZONE:
+            return ["abandoned_fleet", "ruined_station", "ghost_ship"].pick_random()
+        SectorGenerator.SectorType.INHABITED_SYSTEM:
+            return ["trade_hub", "colonial_outpost", "military_base"].pick_random()
+        SectorGenerator.SectorType.BOSS_SECTOR:
+            return ["ancient_ruin", "dimensional_rift", "final_bastion"].pick_random()
+        _:
+            return "default"
 ```
 
 #### SectorContentGenerator.gd
@@ -232,47 +326,61 @@ extends Node
 @export var event_chance: float = 0.1
 
 func generate_sector_content(sector_data: SectorData) -> void:
+    var rng = sector_data.seeded_rng
+
     match sector_data.sector_type:
         SectorGenerator.SectorType.ASTEROID_FIELD:
-            _generate_asteroid_field(sector_data)
+            _generate_asteroid_field(sector_data, rng)
         SectorGenerator.SectorType.NEBULA:
-            _generate_nebula(sector_data)
+            _generate_nebula(sector_data, rng)
         SectorGenerator.SectorType.DERELICT_ZONE:
-            _generate_derelict_zone(sector_data)
+            _generate_derelict_zone(sector_data, rng)
         SectorGenerator.SectorType.INHABITED_SYSTEM:
-            _generate_inhabited_system(sector_data)
+            _generate_inhabited_system(sector_data, rng)
         SectorGenerator.SectorType.BOSS_SECTOR:
-            _generate_boss_sector(sector_data)
+            _generate_boss_sector(sector_data, rng)
 
     # Add dynamic elements
-    _add_resources(sector_data)
-    _add_events(sector_data)
+    _add_resources(sector_data, rng)
+    _add_events(sector_data, rng)
     _generate_navigation_mesh(sector_data)
 
-func _generate_asteroid_field(sector_data: SectorData) -> void:
-    var asteroid_count = int(sector_data.bounds_max.x * sector_data.bounds_max.z * asteroid_density)
+func _generate_asteroid_field(sector_data: SectorData, rng: RandomNumberGenerator) -> void:
+    var base_count = int(sector_data.bounds_max.x * sector_data.bounds_max.z * asteroid_density)
+    var variation = rng.randf_range(-0.2, 0.2)  # ±20% variation
+    var asteroid_count = int(base_count * (1.0 + variation))
 
     for i in range(asteroid_count):
-        var position = _get_random_position_in_bounds(sector_data)
-        var asteroid = _create_asteroid(position, sector_data.difficulty_level)
+        var position = _get_random_position_in_bounds(sector_data, rng)
+        var asteroid = _create_asteroid(position, sector_data.difficulty_level, rng)
         sector_data.terrain_chunks.append(asteroid)
 
-func _generate_inhabited_system(sector_data: SectorData) -> void:
+func _generate_inhabited_system(sector_data: SectorData, rng: RandomNumberGenerator) -> void:
     # Generate asteroid field
-    _generate_asteroid_field(sector_data)
+    _generate_asteroid_field(sector_data, rng)
 
-    # Add stations
-    var station_count = randi_range(1, 3)
+    # Add stations (1-3 based on seeded randomness)
+    var station_roll = rng.randf()
+    var station_count = 1 if station_roll < 0.4 else (2 if station_roll < 0.8 else 3)
+
     for i in range(station_count):
-        var position = _get_random_position_in_bounds(sector_data)
-        var station = _create_station(position, "trading_post")
+        var position = _get_random_position_in_bounds(sector_data, rng)
+        var station = _create_station(position, "trading_post", rng)
         sector_data.stations.append(station)
 
-func _create_station(position: Vector3, station_type: String) -> Station:
+func _get_random_position_in_bounds(sector_data: SectorData, rng: RandomNumberGenerator) -> Vector3:
+    var bounds = sector_data.bounds_max - sector_data.bounds_min
+    return Vector3(
+        sector_data.bounds_min.x + rng.randf() * bounds.x,
+        sector_data.bounds_min.y + rng.randf() * bounds.y,
+        sector_data.bounds_min.z + rng.randf() * bounds.z
+    )
+
+func _create_station(position: Vector3, station_type: String, rng: RandomNumberGenerator) -> Station:
     var station = Station.new()
     station.position = position
     station.station_type = station_type
-    station.faction = _get_random_faction()
+    station.faction = _get_random_faction(rng)
 
     match station_type:
         "trading_post":
@@ -284,20 +392,22 @@ func _create_station(position: Vector3, station_type: String) -> Station:
 
     return station
 
-func _add_resources(sector_data: SectorData) -> void:
-    var resource_count = int(sector_data.bounds_max.x * sector_data.bounds_max.z * resource_density)
+func _add_resources(sector_data: SectorData, rng: RandomNumberGenerator) -> void:
+    var base_count = int(sector_data.bounds_max.x * sector_data.bounds_max.z * resource_density)
+    var variation = rng.randf_range(-0.3, 0.3)  # ±30% variation
+    var resource_count = int(base_count * (1.0 + variation))
 
     for i in range(resource_count):
-        var position = _get_random_position_in_bounds(sector_data)
-        var resource = _create_resource_node(position, sector_data)
+        var position = _get_random_position_in_bounds(sector_data, rng)
+        var resource = _create_resource_node(position, sector_data, rng)
         sector_data.resources.append(resource)
 
-func _create_resource_node(position: Vector3, sector_data: SectorData) -> ResourceNode:
+func _create_resource_node(position: Vector3, sector_data: SectorData, rng: RandomNumberGenerator) -> ResourceNode:
     var resource = ResourceNode.new()
     resource.position = position
-    resource.resource_type = _get_random_resource_type(sector_data.theme_name)
-    resource.amount = randi_range(10, 100)
-    resource.rarity = _calculate_resource_rarity(sector_data.difficulty_level)
+    resource.resource_type = _get_random_resource_type(sector_data.theme_name, rng)
+    resource.amount = rng.randi_range(10, 100)
+    resource.rarity = _calculate_resource_rarity(sector_data.difficulty_level, rng)
     return resource
 ```
 
@@ -317,15 +427,15 @@ enum EventType {
 
 @export var event_spawn_chance: float = 0.15
 
-func inject_dynamic_events(sector_data: SectorData) -> void:
-    if randf() > event_spawn_chance:
+func inject_dynamic_events(sector_data: SectorData, rng: RandomNumberGenerator) -> void:
+    if rng.randf() > event_spawn_chance:
         return
 
-    var event_type = _select_event_type(sector_data)
-    var event_position = _find_event_location(sector_data)
+    var event_type = _select_event_type(sector_data, rng)
+    var event_position = _find_event_location(sector_data, rng)
 
     if event_position != Vector3.ZERO:
-        var event = _create_event(event_type, event_position, sector_data)
+        var event = _create_event(event_type, event_position, sector_data, rng)
         sector_data.events.append(event)
 
 func _select_event_type(sector_data: SectorData) -> EventType:
@@ -487,22 +597,25 @@ func is_position_explored(position: Vector3) -> bool
 ## Testing Strategy
 
 ### Unit Tests
-- Universe layout generation correctness
-- Sector coordinate calculations
-- Difficulty scaling accuracy
-- Navigation mesh validity
+- Coordinate-to-seed conversion accuracy (Cantor pairing)
+- Seeded RNG determinism (same coordinates = same results)
+- Sector property generation consistency
+- Difficulty scaling based on distance
+- Seed collision resistance for edge coordinates
 
 ### Integration Tests
-- Sector transition performance
-- Resource discovery mechanics
-- Event trigger reliability
-- Multi-sector player navigation
+- Sector regeneration consistency (same seed = same sector)
+- Cross-session sector persistence
+- Playthrough variation functionality
+- Coordinate boundary handling (negative/large coordinates)
+- Performance with infinite sector generation
 
 ### Edge Cases
-- Universe boundary handling
-- Sector generation failure recovery
-- Dynamic event timing conflicts
-- Performance with maximum sector density
+- Extreme coordinate values (very large/small numbers)
+- Negative coordinate handling
+- Seed collision scenarios (theoretical limits)
+- RNG consistency across different Godot versions
+- Memory management for infinite sector caching
 
 ## Reusability Guidelines
 
@@ -510,24 +623,43 @@ func is_position_explored(position: Vector3) -> bool
 
 #### 2D Grid-Based Game
 ```gdscript
-# Convert to 2D sector generation
+# Adapt coordinate seeding for 2D games
 func generate_2d_sector(coords: Vector2i) -> SectorData2D:
     var sector = SectorData2D.new()
     sector.coordinates = coords
-    # Generate 2D terrain, obstacles, and points of interest
+    sector.generation_seed = CoordinateSeedGenerator.coords_to_seed(coords)
+    sector.rng = CoordinateSeedGenerator.create_sector_rng(coords)
+
+    # Generate 2D terrain using seeded RNG
+    sector.terrain = generate_terrain_2d(sector.rng)
+    sector.resources = generate_resources_2d(sector.rng)
     return sector
 ```
 
-#### Open World Exploration
+#### Minecraft-Style World Generation
 ```gdscript
-# Add streaming sector generation
-func stream_sectors_around_player(player_pos: Vector3, load_distance: float):
-    var player_sector = world_to_sector_coords(player_pos)
-    var sectors_to_load = get_sectors_in_radius(player_sector, load_distance)
+# Use coordinates as chunk seeds for infinite world
+func generate_world_chunk(chunk_coords: Vector2i) -> WorldChunk:
+    var chunk = WorldChunk.new()
+    chunk.coords = chunk_coords
+    chunk.seed = CoordinateSeedGenerator.coords_to_seed(chunk_coords)
+    chunk.rng = CoordinateSeedGenerator.create_sector_rng(chunk_coords)
 
-    for sector_coords in sectors_to_load:
-        if not universe_map.has(sector_coords):
-            generate_sector(sector_coords)
+    # Generate terrain, structures, biomes using seeded RNG
+    chunk.terrain = generate_terrain(chunk.rng)
+    chunk.structures = generate_structures(chunk.rng)
+    return chunk
+```
+
+#### Multiplayer Shared Universes
+```gdscript
+# Ensure all players see the same universe
+func generate_shared_sector(coords: Vector2i, server_seed: int = 0) -> SectorData:
+    # Use server-provided seed for consistency across all clients
+    CoordinateSeedGenerator.playthrough_seed = server_seed
+    var sector = generate_sector_data(coords)
+    CoordinateSeedGenerator.playthrough_seed = 0  # Reset for local generation
+    return sector
 ```
 
 #### Dungeon Crawler
