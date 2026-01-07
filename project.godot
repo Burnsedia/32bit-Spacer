@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="32 Bit- Spacer"
-run/main_scene="res://Wold.tscn"
+run/main_scene="uid://d2r501n8or6x8"
 config/features=PackedStringArray("4.5")
 config/icon="res://icon.png"
 
