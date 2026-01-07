@@ -81,9 +81,16 @@ Entity (Node3D)
 @export var friction: float = 8.0
 
 var velocity: Vector3 = Vector3.ZERO
+var current_steering_force: Vector3 = Vector3.ZERO
+var steering_enabled: bool = true
 
 func _physics_process(delta: float):
     var desired_velocity = _calculate_velocity(delta)
+
+    # Apply steering forces from AI system if enabled
+    if steering_enabled:
+        desired_velocity += current_steering_force
+
     desired_velocity = _apply_constraints(desired_velocity)
 
     # Apply physics
@@ -94,6 +101,9 @@ func _physics_process(delta: float):
     var collision = get_parent().move_and_collide(velocity * delta)
     if collision:
         _handle_collisions(collision)
+
+    # Reset steering force for next frame
+    current_steering_force = Vector3.ZERO
 ```
 
 #### MovementProfile Resource
@@ -117,9 +127,10 @@ extends Resource
 - Boost and brake mechanics
 
 #### AI Movement
-- Path following with smooth interpolation
-- Collision avoidance algorithms
-- Formation movement for groups
+- Steering force integration from AI System
+- Dynamic collision avoidance using force fields
+- Formation movement through coordinated steering
+- Boids-based movement for swarm entities
 
 #### Physics Movement
 - Gravity and mass simulation
@@ -177,6 +188,9 @@ func get_current_velocity() -> Vector3
 func set_velocity_override(velocity: Vector3, duration: float) -> void
 func add_movement_modifier(modifier: MovementModifier) -> void
 func remove_movement_modifier(modifier_id: String) -> void
+func apply_steering_force(force: Vector3) -> void
+func get_steering_force() -> Vector3
+func set_steering_enabled(enabled: bool) -> void
 ```
 
 #### Movement Events
@@ -226,10 +240,18 @@ signal velocity_changed(entity: Node, new_velocity: Vector3)
 
 #### 2D Platformer
 ```gdscript
-# Modify for side-scrolling
+# Modify for side-scrolling with steering integration
 func _calculate_velocity(delta: float) -> Vector3:
     var input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-    return Vector3(input.x * max_speed, input.y * max_speed * 0.5, 0)
+    var base_velocity = Vector3(input.x * max_speed, input.y * max_speed * 0.5, 0)
+
+    # Apply steering forces from AI (converted to 2D)
+    if steering_enabled:
+        var steering_2d = Vector2(current_steering_force.x, current_steering_force.y)
+        base_velocity.x += steering_2d.x
+        base_velocity.y += steering_2d.y
+
+    return base_velocity
 ```
 
 #### Racing Game
