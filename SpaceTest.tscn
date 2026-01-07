@@ -1,0 +1,69 @@
+[gd_scene load_steps=4 format=3 uid="uid://space_test_scene"]
+
+[ext_resource type="Script" path="res://player/KinematicBody.gd" id="1_player"]
+[ext_resource type="PackedScene" path="res://player/HUD.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://SpaceEnemy.tscn" id="3_enemy"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+ambient_light_color = Color(0.1, 0.1, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(2, 1, 4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(2, 1, 4)
+
+[sub_resource type="SphereMesh" id="SphereMesh_1"]
+radius = 3.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1"]
+radius = 3.0
+
+[node name="SpaceTest" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, 0.75, -0.433013, 0, 10, 0)
+light_energy = 0.5
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
+script = ExtResource("1_player")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
+mesh = SubResource("BoxMesh_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Camera3D" type="Camera3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -8)
+
+[node name="HUD" parent="." instance=ExtResource("2_hud")]
+
+[node name="Asteroid1" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -10)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Asteroid1"]
+mesh = SubResource("SphereMesh_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Asteroid1"]
+shape = SubResource("SphereShape3D_1")
+
+[node name="Asteroid2" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 5, -25)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Asteroid2"]
+mesh = SubResource("SphereMesh_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Asteroid2"]
+shape = SubResource("SphereShape3D_1")
+
+[node name="Enemy1" parent="." instance=ExtResource("3_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -20)
+
+[node name="Enemy2" parent="." instance=ExtResource("3_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 3, -30)
