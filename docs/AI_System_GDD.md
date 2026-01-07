@@ -2,12 +2,13 @@
 
 ## Executive Summary
 
-The **AI System** provides intelligent behavior for non-player entities in Space Rogue: Starbound Odyssey, enabling dynamic and responsive NPC actions. It uses a modular architecture with behavior trees, state machines, and decision-making algorithms to create believable AI that adapts to player actions and environmental conditions.
+The **AI System** provides intelligent behavior for non-player entities in Space Rogue: Starbound Odyssey, enabling dynamic and responsive NPC actions. It uses a modular architecture combining behavior trees, vector steering algorithms, and Craig Reynolds' Boids model to create believable AI that adapts to player actions and environmental conditions.
 
 **Key Features:**
 - Behavior tree-based decision making
-- Dynamic pathfinding and navigation
-- Group coordination and tactics
+- Vector steering algorithms (seek, flee, pursue, evade, wander, obstacle avoidance)
+- Boids algorithm for swarm enemies (separation, alignment, cohesion)
+- Group coordination and emergent behaviors
 - Adaptive difficulty scaling
 - Performance-optimized for multiple AI entities
 
@@ -46,7 +47,8 @@ extends Node
 
 var current_state: AIState
 var target_entity: Node3D
-var navigation_path: Array[Vector3] = []
+var steering_behaviors: Array[SteeringBehavior] = []
+var current_steering_force: Vector3 = Vector3.ZERO
 
 signal state_changed(new_state: AIState, old_state: AIState)
 signal target_acquired(target: Node3D)
@@ -59,24 +61,26 @@ signal target_lost()
 - Dynamic behavior modification
 - Performance profiling
 
-#### NavigationSystem
-- A* pathfinding with optimizations
-- Dynamic obstacle avoidance
-- Group movement coordination
-- Terrain cost evaluation
+#### SteeringSystem
+- Vector-based steering force calculations
+- Boids algorithm for swarm enemies (separation, alignment, cohesion)
+- Classic steering behaviors for individual enemies (seek, flee, pursue, evade, wander, obstacle avoidance)
+- Dynamic obstacle avoidance using force fields and predictive calculations
+- Group movement coordination through behavioral composition and emergent behaviors
 
 ### Data Flow
-1. Environmental sensors gather data
-2. Behavior tree evaluates conditions
-3. Decision made and state updated
-4. Movement commands issued
-5. Actions executed and feedback received
+1. Environmental sensors gather data (positions, velocities, obstacles)
+2. Behavior tree evaluates conditions and selects steering behaviors
+3. Steering forces calculated based on selected behaviors
+4. Forces applied to movement system with priority weighting
+5. Movement executed and feedback received for behavior adjustment
 
 ### Performance Characteristics
 - Supports 20-50 active AI agents simultaneously
-- Configurable update frequencies
-- Spatial partitioning for efficient queries
-- Behavior tree caching and optimization
+- Configurable update frequencies (steering calculations every 1-4 frames)
+- Spatial partitioning for efficient neighbor detection
+- Steering force caching and behavioral composition optimization
+- Boids calculations batched for swarm enemies
 
 ## Technical Implementation
 
@@ -84,10 +88,11 @@ signal target_lost()
 ```
 AISystem (Node)
 ├── AIManager
-├── NavigationSystem
+├── SteeringSystem
 ├── BehaviorTreeManager
 └── AI Agents (Node)
-    ├── EnemyAI (AIAgent)
+    ├── SwarmEnemyAI (AIAgent)  # Uses Boids
+    ├── HunterEnemyAI (AIAgent) # Uses classic steering
     ├── AllyAI (AIAgent)
     └── NeutralAI (AIAgent)
 ```
@@ -200,45 +205,177 @@ class Action extends BTNode:
         return action_func.call()
 ```
 
-#### NavigationSystem.gd
+#### SteeringSystem.gd
 ```gdscript
-class_name NavigationSystem
+class_name SteeringSystem
 extends Node
 
-@onready var navigation_region: NavigationRegion3D = $NavigationRegion3D
+@export var max_steering_force: float = 5.0
+@export var neighbor_detection_radius: float = 20.0
 
-func calculate_path(start: Vector3, end: Vector3) -> Array[Vector3]:
-    return NavigationServer3D.map_get_path(
-        navigation_region.get_navigation_map(),
-        start,
-        end,
-        true
+var spatial_partition: Dictionary = {}  # Grid-based spatial partitioning
+
+func calculate_steering_force(agent: AIAgent, delta: float) -> Vector3:
+    var total_force = Vector3.ZERO
+
+    for behavior in agent.steering_behaviors:
+        var force = behavior.calculate_force(agent, delta)
+        total_force += force
+
+    # Limit total force to prevent unrealistic acceleration
+    return total_force.limit_length(max_steering_force)
+
+func update_spatial_partition(agents: Array[AIAgent]) -> void:
+    spatial_partition.clear()
+
+    for agent in agents:
+        var grid_pos = world_to_grid(agent.global_position)
+        if not spatial_partition.has(grid_pos):
+            spatial_partition[grid_pos] = []
+        spatial_partition[grid_pos].append(agent)
+
+func get_neighbors(agent: AIAgent, radius: float) -> Array[AIAgent]:
+    var neighbors: Array[AIAgent] = []
+    var agent_grid = world_to_grid(agent.global_position)
+
+    # Check surrounding grid cells
+    for x in range(-1, 2):
+        for y in range(-1, 2):
+            for z in range(-1, 2):
+                var check_grid = agent_grid + Vector3i(x, y, z)
+                if spatial_partition.has(check_grid):
+                    for other_agent in spatial_partition[check_grid]:
+                        if other_agent != agent and agent.global_position.distance_to(other_agent.global_position) <= radius:
+                            neighbors.append(other_agent)
+
+    return neighbors
+
+func world_to_grid(position: Vector3) -> Vector3i:
+    var grid_size = 10.0  # 10 unit grid cells
+    return Vector3i(
+        floor(position.x / grid_size),
+        floor(position.y / grid_size),
+        floor(position.z / grid_size)
     )
+```
 
-func find_closest_point(position: Vector3) -> Vector3:
-    return NavigationServer3D.map_get_closest_point(
-        navigation_region.get_navigation_map(),
-        position
-    )
+#### BoidsBehavior.gd
+```gdscript
+class_name BoidsBehavior
+extends SteeringBehavior
 
-func avoid_obstacles(current_path: Array[Vector3], obstacles: Array[Vector3]) -> Array[Vector3]:
-    # Implement obstacle avoidance algorithm
-    var adjusted_path = current_path.duplicate()
+@export var separation_radius: float = 5.0
+@export var alignment_radius: float = 10.0
+@export var cohesion_radius: float = 15.0
 
-    for obstacle in obstacles:
-        # Raycast to check for obstacles
-        var space_state = get_world_3d().direct_space_state
-        for i in range(adjusted_path.size() - 1):
-            var from = adjusted_path[i]
-            var to = adjusted_path[i + 1]
-            var query = PhysicsRayQueryParameters3D.create(from, to)
-            var result = space_state.intersect_ray(query)
+@export var separation_weight: float = 1.5
+@export var alignment_weight: float = 1.0
+@export var cohesion_weight: float = 1.0
 
-            if result:
-                # Adjust path around obstacle
-                adjusted_path = calculate_detour(adjusted_path, obstacle, i)
+func calculate_force(agent: AIAgent, delta: float) -> Vector3:
+    var neighbors = SteeringSystem.get_neighbors(agent, max(separation_radius, alignment_radius, cohesion_radius))
 
-    return adjusted_path
+    var separation = calculate_separation(agent, neighbors) * separation_weight
+    var alignment = calculate_alignment(agent, neighbors) * alignment_weight
+    var cohesion = calculate_cohesion(agent, neighbors) * cohesion_weight
+
+    return separation + alignment + cohesion
+
+func calculate_separation(agent: AIAgent, neighbors: Array[AIAgent]) -> Vector3:
+    var force = Vector3.ZERO
+    var count = 0
+
+    for neighbor in neighbors:
+        var distance = agent.global_position.distance_to(neighbor.global_position)
+        if distance > 0 and distance < separation_radius:
+            var push_force = (agent.global_position - neighbor.global_position).normalized()
+            push_force /= distance  # Stronger force when closer
+            force += push_force
+            count += 1
+
+    if count > 0:
+        force /= count
+
+    return force
+
+func calculate_alignment(agent: AIAgent, neighbors: Array[AIAgent]) -> Vector3:
+    var average_velocity = Vector3.ZERO
+    var count = 0
+
+    for neighbor in neighbors:
+        var distance = agent.global_position.distance_to(neighbor.global_position)
+        if distance > 0 and distance < alignment_radius:
+            average_velocity += neighbor.velocity
+            count += 1
+
+    if count > 0:
+        average_velocity /= count
+        return (average_velocity - agent.velocity).normalized()
+
+    return Vector3.ZERO
+
+func calculate_cohesion(agent: AIAgent, neighbors: Array[AIAgent]) -> Vector3:
+    var center_of_mass = Vector3.ZERO
+    var count = 0
+
+    for neighbor in neighbors:
+        var distance = agent.global_position.distance_to(neighbor.global_position)
+        if distance > 0 and distance < cohesion_radius:
+            center_of_mass += neighbor.global_position
+            count += 1
+
+    if count > 0:
+        center_of_mass /= count
+        return (center_of_mass - agent.global_position).normalized()
+
+    return Vector3.ZERO
+```
+
+#### SteeringBehavior.gd (Base Class)
+```gdscript
+class_name SteeringBehavior
+extends Node
+
+@export var weight: float = 1.0
+@export var enabled: bool = true
+
+func calculate_force(agent: AIAgent, delta: float) -> Vector3:
+    # Override in subclasses
+    return Vector3.ZERO
+```
+
+#### SeekBehavior.gd
+```gdscript
+class_name SeekBehavior extends SteeringBehavior
+
+func calculate_force(agent: AIAgent, delta: float) -> Vector3:
+    if not agent.target_entity:
+        return Vector3.ZERO
+
+    var desired_velocity = (agent.target_entity.global_position - agent.global_position).normalized()
+    desired_velocity *= agent.max_speed
+
+    return (desired_velocity - agent.velocity) * weight
+```
+
+#### FleeBehavior.gd
+```gdscript
+class_name FleeBehavior extends SteeringBehavior
+
+@export var flee_distance: float = 30.0
+
+func calculate_force(agent: AIAgent, delta: float) -> Vector3:
+    if not agent.target_entity:
+        return Vector3.ZERO
+
+    var distance = agent.global_position.distance_to(agent.target_entity.global_position)
+    if distance > flee_distance:
+        return Vector3.ZERO
+
+    var desired_velocity = (agent.global_position - agent.target_entity.global_position).normalized()
+    desired_velocity *= agent.max_speed
+
+    return (desired_velocity - agent.velocity) * weight
 ```
 
 ## Entity Integration
@@ -302,8 +439,9 @@ func get_agents_in_range(position: Vector3, radius: float) -> Array[AIAgent]
 func set_state(new_state: AIState) -> void
 func set_target(entity: Node3D) -> void
 func clear_target() -> void
-func add_behavior_modifier(modifier: BehaviorModifier) -> void
-func calculate_path_to_target() -> Array[Vector3]
+func add_steering_behavior(behavior: SteeringBehavior) -> void
+func remove_steering_behavior(behavior_type: String) -> void
+func get_steering_force() -> Vector3
 func evaluate_threat_level(entity: Node3D) -> float
 ```
 
@@ -324,21 +462,24 @@ func evaluate_threat_level(entity: Node3D) -> float
 
 ### Unit Tests
 - Behavior tree execution correctness
-- Pathfinding accuracy and performance
+- Steering force calculations accuracy
+- Boids algorithm emergent behaviors
 - State transition logic
 - Sensor data processing
 
 ### Integration Tests
-- AI vs Player combat scenarios
-- Group behavior coordination
-- Environmental interaction responses
+- AI vs Player combat scenarios with steering behaviors
+- Boids swarm formation and movement patterns
+- Steering behavior combinations and priority weighting
+- Environmental interaction responses (obstacle avoidance)
 - Performance scaling with multiple agents
 
 ### Edge Cases
-- Pathfinding around complex obstacles
-- Target switching during combat
+- Steering force conflicts and oscillation
+- Boids edge cases (single boid, empty neighborhoods)
+- Target switching during steering behavior transitions
 - AI behavior with incomplete sensor data
-- Memory and performance limits
+- Memory and performance limits with many steering behaviors
 
 ## Reusability Guidelines
 
@@ -346,10 +487,15 @@ func evaluate_threat_level(entity: Node3D) -> float
 
 #### 2D Platformer AI
 ```gdscript
-# Modify for 2D navigation
-func calculate_path_2d(start: Vector2, end: Vector2) -> Array[Vector2]:
-    # Use A* with 2D grid
-    return AStar2D.calculate_path(start, end)
+# Modify for 2D steering
+func calculate_2d_steering_force(agent: AIAgent2D, delta: float) -> Vector2:
+    var total_force = Vector2.ZERO
+
+    for behavior in agent.steering_behaviors:
+        var force = behavior.calculate_force_2d(agent, delta)
+        total_force += force
+
+    return total_force.limit_length(max_steering_force)
 ```
 
 #### RTS Game AI
@@ -394,15 +540,27 @@ class CustomBehaviorNode extends BehaviorTree.BTNode:
         return NodeStatus.SUCCESS
 ```
 
-#### AI Learning Integration
+#### Adaptive Steering Behaviors
 ```gdscript
-class AdaptiveAIAgent extends AIAgent:
-    var learning_data: Dictionary = {}
+class AdaptiveSteeringAgent extends AIAgent:
+    var behavior_effectiveness: Dictionary = {}
 
-    func learn_from_combat_result(result: CombatResult):
-        # Update behavior based on combat outcomes
-        learning_data[result.enemy_type] = result.effectiveness
-        adjust_behavior_weights(learning_data)
+    func learn_from_steering_result(result: SteeringResult):
+        # Update steering behavior weights based on effectiveness
+        var behavior_name = result.behavior_name
+        var effectiveness = result.effectiveness
+
+        if not behavior_effectiveness.has(behavior_name):
+            behavior_effectiveness[behavior_name] = 1.0
+
+        # Adjust weight based on performance
+        behavior_effectiveness[behavior_name] = lerp(
+            behavior_effectiveness[behavior_name],
+            effectiveness,
+            0.1  # Learning rate
+        )
+
+        adjust_steering_weights(behavior_effectiveness)
 ```
 
 This AI system provides sophisticated NPC behavior while maintaining clean separation between AI logic and entity-specific implementations, making it highly reusable across different game types.
