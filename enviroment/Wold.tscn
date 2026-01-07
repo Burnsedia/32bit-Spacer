@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://Imperial.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://Pancake.tscn" id="3_4g7sx"]
 [ext_resource type="Script" uid="uid://t067nlrbr26v" path="res://KinematicBody.gd" id="4_1qbdp"]
+[ext_resource type="PackedScene" uid="uid://b4x8q7k8m3d1a" path="res://player/HUD.tscn" id="5_hud"]
 
 [sub_resource type="Curve3D" id="1"]
 bake_interval = 230.59
@@ -46,3 +47,5 @@ script = ExtResource("4_1qbdp")
 
 [node name="Camera3D" type="Camera3D" parent="Pancake"]
 transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 0, 1.4039993, -16.6661)
+
+[node name="HUD" parent="." instance=ExtResource("5_hud")]
