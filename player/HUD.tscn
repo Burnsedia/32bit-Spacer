@@ -1,0 +1,84 @@
+[gd_scene load_steps=4 format=3 uid="uid://b4x8q7k8m3d1a"]
+
+[ext_resource type="Script" path="res://player/HUD.gd" id="1_8q7k8"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8q7k8"]
+bg_color = Color(0.2, 0.8, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m3d1a"]
+bg_color = Color(0.8, 0.8, 0.2, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_8q7k8")
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 220.0
+offset_bottom = 40.0
+theme_override_styles/fill = SubResource("StyleBoxFlat_8q7k8")
+value = 100.0
+show_percentage = false
+
+[node name="HealthLabel" type="Label" parent="."]
+offset_left = 20.0
+offset_top = 45.0
+offset_right = 120.0
+offset_bottom = 68.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+text = "100/100 HP"
+
+[node name="XPBar" type="ProgressBar" parent="."]
+offset_left = 20.0
+offset_top = 80.0
+offset_right = 220.0
+offset_bottom = 100.0
+theme_override_styles/fill = SubResource("StyleBoxFlat_m3d1a")
+value = 50.0
+show_percentage = false
+
+[node name="XPLabel" type="Label" parent="."]
+offset_left = 20.0
+offset_top = 105.0
+offset_right = 120.0
+offset_bottom = 128.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+text = "50/100 XP"
+
+[node name="LevelLabel" type="Label" parent="."]
+offset_left = 20.0
+offset_top = 135.0
+offset_right = 120.0
+offset_bottom = 158.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+text = "Level 1"
+
+[node name="WeaponStatus" type="Label" parent="."]
+offset_left = 20.0
+offset_top = 165.0
+offset_right = 220.0
+offset_bottom = 188.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+text = "Weapon: Ready"
