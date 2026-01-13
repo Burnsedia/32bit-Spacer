@@ -77,7 +77,7 @@ godot --debug-collisions project.godot
 ### GDScript Conventions
 
 #### Class Structure
-```gdscript
+```typescript
 extends CharacterBody3D
 
 # Signals
