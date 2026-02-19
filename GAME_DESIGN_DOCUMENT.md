@@ -2,24 +2,25 @@
 
 ## Executive Summary
 
-**Space Rogue: Starbound Odyssey** is a 3D space exploration shooter roguelike built in Godot 4.5. Players pilot a customizable starship through procedurally generated asteroid fields, battling enemies, collecting upgrades, and ultimately defeating a powerful boss. The game adapts the classic dungeon crawler formula to a space setting, featuring real-time combat, exploration, and progression systems.
+**32bit Spacer** is a 3D space exploration shooter roguelike built in Godot 4.6. Players pilot a customizable starship through procedurally generated asteroid fields, battling enemies, collecting upgrades, and ultimately defeating a powerful boss. The game adapts the classic dungeon crawler formula to a space setting, featuring real-time combat, exploration, and progression systems.
 
 **Target Platform**: PC (Windows/Linux/macOS), potential web deployment
 **Genre**: Action-Adventure, Roguelike, Space Shooter
-**Target Audience**: Fans of games like FTL, Asteroids, and dungeon crawlers
+**Target Audience**: Fans of games like Freelancer and WingCommander 
 **Estimated Development Time**: 8-12 weeks
 **Team Size**: Solo developer with Godot engine
 
 ## Game Overview
 
 ### Core Concept
-Navigate vast, mysterious space sectors in a rogue-like spaceship shooter. Explore hidden asteroid fields, battle alien threats, upgrade your vessel, and uncover the secrets of a derelict space station guarded by a powerful AI boss.
+Navigate vast, mysterious space sectors in a rogue-like spaceship shooter. Explore hidden asteroid fields, battle alien threats, upgrade your vessel, and uncover the secrets of a derelict space stations guarded by a powerful AI boss. Explore abandond space directly and trade with Nutrual AI
 
 ### Unique Selling Points
 - **Procedural Space Exploration**: Each run generates unique asteroid fields and enemy placements
 - **Real-time Combat**: Fast-paced space dogfights with strategic upgrade choices
 - **Fog of War**: Space is initially hidden, revealed as you explore
 - **Weapon Progression**: Collect and upgrade various weapon systems
+- **Ship Progression**: Collect and upgrade various ship subsystems
 - **Boss Rush**: Epic final confrontation with a multi-phase AI overlord
 
 ### Story & Setting
@@ -29,7 +30,7 @@ You are a lone space explorer who discovers an ancient derelict space station. T
 - **Exploration**: Discover hidden sectors and secrets
 - **Combat**: Engage in satisfying space battles with tactical depth
 - **Progression**: Feel powerful growth through upgrades and leveling
-- **Replayability**: Procedural generation ensures no two runs are the same
+- **Replayability**: Procedural generation ensures no two runs are the same, and procedurally generates side quests
 
 ## Gameplay Mechanics
 
