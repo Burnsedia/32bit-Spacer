@@ -5,6 +5,7 @@
 The **AI System** provides intelligent behavior for non-player entities in Space Rogue: Starbound Odyssey, enabling dynamic and responsive NPC actions. It uses a modular architecture combining behavior trees, vector steering algorithms, and Craig Reynolds' Boids model to create believable AI that adapts to player actions and environmental conditions.
 
 **Key Features:**
+
 - Behavior tree-based decision making
 - Vector steering algorithms (seek, flee, pursue, evade, wander, obstacle avoidance)
 - Boids algorithm for swarm enemies (separation, alignment, cohesion)
@@ -13,6 +14,7 @@ The **AI System** provides intelligent behavior for non-player entities in Space
 - Performance-optimized for multiple AI entities
 
 **Integration Points:**
+
 - Receives position data from Movement System
 - Provides targeting information to Combat System
 - Uses world data from World Generation System
@@ -23,6 +25,7 @@ The **AI System** provides intelligent behavior for non-player entities in Space
 ### Core Components
 
 #### AIManager (Central Coordinator)
+
 ```gdscript
 class_name AIManager
 extends Node
@@ -38,6 +41,7 @@ func _process(delta: float):
 ```
 
 #### AIAgent (Individual AI Controller)
+
 ```gdscript
 class_name AIAgent
 extends Node
@@ -56,12 +60,14 @@ signal target_lost()
 ```
 
 #### BehaviorTreeSystem
+
 - Hierarchical decision trees
 - Composite, decorator, and leaf nodes
 - Dynamic behavior modification
 - Performance profiling
 
 #### SteeringSystem
+
 - Vector-based steering force calculations
 - Boids algorithm for swarm enemies (separation, alignment, cohesion)
 - Classic steering behaviors for individual enemies (seek, flee, pursue, evade, wander, obstacle avoidance)
@@ -69,6 +75,7 @@ signal target_lost()
 - Group movement coordination through behavioral composition and emergent behaviors
 
 ### Data Flow
+
 1. Environmental sensors gather data (positions, velocities, obstacles)
 2. Behavior tree evaluates conditions and selects steering behaviors
 3. Steering forces calculated based on selected behaviors
@@ -76,6 +83,7 @@ signal target_lost()
 5. Movement executed and feedback received for behavior adjustment
 
 ### Performance Characteristics
+
 - Supports 20-50 active AI agents simultaneously
 - Configurable update frequencies (steering calculations every 1-4 frames)
 - Spatial partitioning for efficient neighbor detection
@@ -85,6 +93,7 @@ signal target_lost()
 ## Technical Implementation
 
 ### Godot Node Structure
+
 ```
 AISystem (Node)
 ├── AIManager
@@ -100,6 +109,7 @@ AISystem (Node)
 ### Key Scripts
 
 #### AIAgent.gd
+
 ```gdscript
 class_name AIAgent
 extends Node
@@ -157,6 +167,7 @@ func perform_current_action(delta: float):
 ```
 
 #### BehaviorTree.gd
+
 ```gdscript
 class_name BehaviorTree
 extends Node
@@ -206,6 +217,7 @@ class Action extends BTNode:
 ```
 
 #### SteeringSystem.gd
+
 ```gdscript
 class_name SteeringSystem
 extends Node
@@ -260,6 +272,7 @@ func world_to_grid(position: Vector3) -> Vector3i:
 ```
 
 #### BoidsBehavior.gd
+
 ```gdscript
 class_name BoidsBehavior
 extends SteeringBehavior
@@ -332,6 +345,7 @@ func calculate_cohesion(agent: AIAgent, neighbors: Array[AIAgent]) -> Vector3:
 ```
 
 #### SteeringBehavior.gd (Base Class)
+
 ```gdscript
 class_name SteeringBehavior
 extends Node
@@ -345,6 +359,7 @@ func calculate_force(agent: AIAgent, delta: float) -> Vector3:
 ```
 
 #### SeekBehavior.gd
+
 ```gdscript
 class_name SeekBehavior extends SteeringBehavior
 
@@ -359,6 +374,7 @@ func calculate_force(agent: AIAgent, delta: float) -> Vector3:
 ```
 
 #### FleeBehavior.gd
+
 ```gdscript
 class_name FleeBehavior extends SteeringBehavior
 
@@ -383,6 +399,7 @@ func calculate_force(agent: AIAgent, delta: float) -> Vector3:
 ### Required Interfaces
 
 #### IAIEntity
+
 ```gdscript
 interface IAIEntity:
     func get_ai_agent() -> AIAgent
@@ -393,6 +410,7 @@ interface IAIEntity:
 ```
 
 #### BehaviorProfile
+
 ```gdscript
 class BehaviorProfile:
     var aggression_level: float = 1.0
@@ -406,16 +424,19 @@ class BehaviorProfile:
 ### Entity Types
 
 #### Enemy Patrol Ship
+
 - Patrols designated routes
 - Engages threats within range
 - Coordinates with nearby allies
 
 #### Aggressive Hunter
+
 - Actively seeks player targets
 - Uses hit-and-run tactics
 - Adapts to player weapon preferences
 
 #### Defensive Guardian
+
 - Protects specific locations
 - Calls for reinforcements
 - Uses environmental advantages
@@ -425,6 +446,7 @@ class BehaviorProfile:
 ### Public Methods
 
 #### AIManager
+
 ```gdscript
 func register_agent(agent: AIAgent) -> void
 func unregister_agent(agent: AIAgent) -> void
@@ -435,6 +457,7 @@ func get_agents_in_range(position: Vector3, radius: float) -> Array[AIAgent]
 ```
 
 #### AIAgent
+
 ```gdscript
 func set_state(new_state: AIState) -> void
 func set_target(entity: Node3D) -> void
@@ -448,12 +471,14 @@ func evaluate_threat_level(entity: Node3D) -> float
 ### Configuration Options
 
 #### AI Difficulty Settings
+
 - Reaction time multipliers
 - Accuracy modifiers
 - Decision-making complexity
 - Group coordination effectiveness
 
 #### Behavior Customization
+
 - Personality profiles (aggressive, cautious, erratic)
 - Tactical preferences (ranged, melee, hit-and-run)
 - Environmental adaptation rules
@@ -461,6 +486,7 @@ func evaluate_threat_level(entity: Node3D) -> float
 ## Testing Strategy
 
 ### Unit Tests
+
 - Behavior tree execution correctness
 - Steering force calculations accuracy
 - Boids algorithm emergent behaviors
@@ -468,6 +494,7 @@ func evaluate_threat_level(entity: Node3D) -> float
 - Sensor data processing
 
 ### Integration Tests
+
 - AI vs Player combat scenarios with steering behaviors
 - Boids swarm formation and movement patterns
 - Steering behavior combinations and priority weighting
@@ -475,6 +502,7 @@ func evaluate_threat_level(entity: Node3D) -> float
 - Performance scaling with multiple agents
 
 ### Edge Cases
+
 - Steering force conflicts and oscillation
 - Boids edge cases (single boid, empty neighborhoods)
 - Target switching during steering behavior transitions
@@ -486,6 +514,7 @@ func evaluate_threat_level(entity: Node3D) -> float
 ### Adapting for Other Projects
 
 #### 2D Platformer AI
+
 ```gdscript
 # Modify for 2D steering
 func calculate_2d_steering_force(agent: AIAgent2D, delta: float) -> Vector2:
@@ -499,6 +528,7 @@ func calculate_2d_steering_force(agent: AIAgent2D, delta: float) -> Vector2:
 ```
 
 #### RTS Game AI
+
 ```gdscript
 # Add group command system
 class GroupAI extends AIAgent:
@@ -510,6 +540,7 @@ class GroupAI extends AIAgent:
 ```
 
 #### Puzzle Game AI
+
 ```gdscript
 # Simplify for non-combat scenarios
 func create_puzzle_ai():
@@ -525,6 +556,7 @@ func create_puzzle_ai():
 ### Extension Mechanisms
 
 #### Custom Behavior Nodes
+
 ```gdscript
 class CustomBehaviorNode extends BehaviorTree.BTNode:
     var custom_condition: Callable
@@ -541,6 +573,7 @@ class CustomBehaviorNode extends BehaviorTree.BTNode:
 ```
 
 #### Adaptive Steering Behaviors
+
 ```gdscript
 class AdaptiveSteeringAgent extends AIAgent:
     var behavior_effectiveness: Dictionary = {}
