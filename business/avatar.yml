@@ -1,0 +1,31 @@
+version: "1.0"
+app: 32bit-Spacer
+
+avatar:
+  id: game_creator_icp
+  label: Systems Explorer Erin
+  role: Indie player who values depth and experimentation
+  context: Enjoys replayable systems and emergent gameplay loops
+
+goals:
+  - Discover deep mechanics with meaningful progression
+  - Follow transparent development updates
+  - Participate in playtests and feedback cycles
+
+pain_points:
+  - Many indie games lack long-term systems depth
+  - Development visibility is often inconsistent
+  - Complex mechanics can be poorly explained
+
+objections:
+  - "Will this project ship and stay maintained"
+  - "Will learning curve be worth the payoff"
+
+proof_required:
+  - Regular milestone updates
+  - Playable builds and test feedback loops
+  - Clear roadmap and scope boundaries
+
+ctas:
+  primary: Wishlist and follow devlog
+  secondary: Join playtest
